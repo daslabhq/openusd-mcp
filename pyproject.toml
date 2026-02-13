@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openusd-mcp"
+version = "0.1.0"
+description = "MCP server for OpenUSD — let AI assistants read and manipulate 3D scenes"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Mirko Kiefer", email = "mirko@daslab.dev" },
+]
+keywords = ["openusd", "usd", "usdz", "mcp", "3d", "ai", "physical-ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "usd-core>=24.0",
+    "mcp>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/daslabhq/openusd-mcp"
+Repository = "https://github.com/daslabhq/openusd-mcp"
+Issues = "https://github.com/daslabhq/openusd-mcp/issues"
+
+[project.scripts]
+openusd-mcp = "openusd_mcp.server:main"
