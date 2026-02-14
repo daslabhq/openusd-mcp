@@ -1,0 +1,295 @@
+#usda 1.0
+(
+    metersPerUnit = 0.01
+    upAxis = "Y"
+)
+
+def Xform "Product" (
+    variants = {
+        string color = "midnight"
+        string finish = "satin"
+        string size = "medium"
+    }
+    prepend variantSets = ["size", "color", "finish"]
+)
+{
+    def Mesh "Body"
+    {
+        float3[] extent = [(-6, -4, -6), (6, 4, 6)]
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 0, 4, 7, 3, 1, 2, 6, 5]
+        point3f[] points = [(-6, -4, -6), (6, -4, -6), (6, 4, -6), (-6, 4, -6), (-6, -4, 6), (6, -4, 6), (6, 4, 6), (-6, 4, 6)]
+        double3 xformOp:translate = (0, 4, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def Mesh "Accent" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        float3[] extent = [(-6.1, -0.25, -6.1), (6.1, 0.25, 6.1)]
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 0, 4, 7, 3, 1, 2, 6, 5]
+        rel material:binding = </Product/Materials/AccentMetal>
+        point3f[] points = [(-6.1, -0.25, -6.1), (6.1, -0.25, -6.1), (6.1, 0.25, -6.1), (-6.1, 0.25, -6.1), (-6.1, -0.25, 6.1), (6.1, -0.25, 6.1), (6.1, 0.25, 6.1), (-6.1, 0.25, 6.1)]
+        double3 xformOp:translate = (0, 7, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def Mesh "Grille" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        float3[] extent = [(-5, -2.5, -0.15), (5, 2.5, 0.15)]
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        int[] faceVertexIndices = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 0, 4, 7, 3, 1, 2, 6, 5]
+        rel material:binding = </Product/Materials/Grille>
+        point3f[] points = [(-5, -2.5, -0.15), (5, -2.5, -0.15), (5, 2.5, -0.15), (-5, 2.5, -0.15), (-5, -2.5, 0.15), (5, -2.5, 0.15), (5, 2.5, 0.15), (-5, 2.5, 0.15)]
+        double3 xformOp:translate = (0, 4, 6.15)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    over "Materials"
+    {
+        def Material "AccentMetal"
+        {
+            token outputs:surface.connect = </Product/Materials/AccentMetal/PBRShader.outputs:surface>
+
+            def Shader "PBRShader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.5, 0.5, 0.52)
+                float inputs:metallic = 0.95
+                float inputs:opacity = 1
+                float inputs:roughness = 0.15
+                token outputs:surface
+            }
+        }
+
+        def Material "Grille"
+        {
+            token outputs:surface.connect = </Product/Materials/Grille/PBRShader.outputs:surface>
+
+            def Shader "PBRShader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.12, 0.12, 0.12)
+                float inputs:metallic = 0.3
+                float inputs:opacity = 1
+                float inputs:roughness = 0.6
+                token outputs:surface
+            }
+        }
+    }
+    variantSet "size" = {
+        "large" {
+            float3 xformOp:scale:size = (1.4, 1.4, 1.4)
+            uniform token[] xformOpOrder = ["xformOp:scale:size"]
+
+        }
+        "medium" {
+            float3 xformOp:scale:size = (1, 1, 1)
+            uniform token[] xformOpOrder = ["xformOp:scale:size"]
+
+        }
+        "small" {
+            float3 xformOp:scale:size = (0.7, 0.7, 0.7)
+            uniform token[] xformOpOrder = ["xformOp:scale:size"]
+
+        }
+    }
+    variantSet "color" = {
+        "gold" {
+            def "Materials"
+            {
+                def Material "Gold"
+                {
+                    token outputs:surface.connect = </Product/Materials/Gold/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.83, 0.69, 0.22)
+                        float inputs:metallic = 0.9
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.3
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/Gold>
+            }
+
+        }
+        "midnight" {
+            def "Materials"
+            {
+                def Material "Midnight"
+                {
+                    token outputs:surface.connect = </Product/Materials/Midnight/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.08, 0.08, 0.1)
+                        float inputs:metallic = 0
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.3
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/Midnight>
+            }
+
+        }
+        "red" {
+            def "Materials"
+            {
+                def Material "Red"
+                {
+                    token outputs:surface.connect = </Product/Materials/Red/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.72, 0.08, 0.08)
+                        float inputs:metallic = 0.15
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.3
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/Red>
+            }
+
+        }
+        "silver" {
+            def "Materials"
+            {
+                def Material "Silver"
+                {
+                    token outputs:surface.connect = </Product/Materials/Silver/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.75, 0.75, 0.77)
+                        float inputs:metallic = 0.85
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.3
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/Silver>
+            }
+
+        }
+    }
+    variantSet "finish" = {
+        "glossy" {
+            over "Materials"
+            {
+                def Material "FinishGlossy"
+                {
+                    token outputs:surface.connect = </Product/Materials/FinishGlossy/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.08, 0.08, 0.1)
+                        float inputs:metallic = 0
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.1
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/FinishGlossy>
+            }
+
+        }
+        "matte" {
+            over "Materials"
+            {
+                def Material "FinishMatte"
+                {
+                    token outputs:surface.connect = </Product/Materials/FinishMatte/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.08, 0.08, 0.1)
+                        float inputs:metallic = 0
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.8
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/FinishMatte>
+            }
+
+        }
+        "satin" {
+            over "Materials"
+            {
+                def Material "FinishSatin"
+                {
+                    token outputs:surface.connect = </Product/Materials/FinishSatin/PBRShader.outputs:surface>
+
+                    def Shader "PBRShader"
+                    {
+                        uniform token info:id = "UsdPreviewSurface"
+                        color3f inputs:diffuseColor = (0.08, 0.08, 0.1)
+                        float inputs:metallic = 0
+                        float inputs:opacity = 1
+                        float inputs:roughness = 0.4
+                        token outputs:surface
+                    }
+                }
+            }
+
+            over "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </Product/Materials/FinishSatin>
+            }
+
+        }
+    }
+}
+

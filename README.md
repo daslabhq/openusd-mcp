@@ -40,7 +40,11 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Then ask Claude: *"Inspect the scene graph of my-scene.usdz and list all mesh prims with their materials."*
+Then try it with the included example scenes:
+
+*"Inspect the scene graph of examples/desk_setup.usda and describe what's on the desk."*
+
+*"What color options does the product in examples/product_configurator.usda have? Switch it to gold."*
 
 ### With any MCP client
 
@@ -50,44 +54,56 @@ openusd-mcp --stdio
 
 The server communicates over stdin/stdout using the [MCP protocol](https://modelcontextprotocol.io).
 
-### As a Python library
+## Examples
 
-```python
-from openusd_mcp import inspect_scene, get_prim, export_mesh
+The repo includes two example scenes that exercise all 8 tools.
 
-# Get the full scene graph
-tree = inspect_scene("scene.usdz")
-print(tree)
+### Desk setup — scene inspection
 
-# Query a specific prim
-prim = get_prim("scene.usdz", "/World/Body")
-print(prim.attributes)
-
-# Export a mesh as STL
-export_mesh("scene.usdz", "/World/Body", "body.stl")
-```
-
-## Example
+A desk with a table, monitor, keyboard, and mug. 5 PBR materials (wood, metal, screen, ceramic, dark plastic), 10 meshes, real-world dimensions.
 
 ```
-You: Inspect the scene graph of case.usdz
+You: What's in examples/desk_setup.usda?
 
-Claude: Here's the scene graph for case.usdz:
+Claude: A desk scene with 25 prims, 10 meshes, 5 materials:
 
-  /Case (Xform)
-    /Case/Body (Mesh) — 2,847 faces, material: OrangePBR
-    /Case/Logo (Mesh) — 1,204 faces, material: BlackPBR
+  /Desk (Xform)
+    /Desk/Table/Top (Mesh) — Wood, 120×60×3 cm
+    /Desk/Table/Leg1..4 (Mesh) — Metal
+    /Desk/Monitor/Screen (Mesh) — dark glossy
+    /Desk/Monitor/Stand (Mesh) — Metal
+    /Desk/Monitor/Base (Mesh) — Metal
+    /Desk/Keyboard (Mesh) — DarkPlastic
+    /Desk/Mug/Body (Mesh) — Ceramic
 
-  Materials:
-    OrangePBR — diffuseColor: (1.0, 0.55, 0.0), metallic: 0.0, roughness: 0.4
-    BlackPBR  — diffuseColor: (0.1, 0.1, 0.1), metallic: 0.0, roughness: 0.3
+  Bounds: 1200 × 835 × 1250 mm
 
-  Scene bounds: (42mm x 26mm x 13mm)
-  Up axis: Z, meters per unit: 0.001
+You: Export the tabletop as STL
 
-You: Export the Body mesh as STL
+Claude: Exported /Desk/Table/Top to tabletop.stl (12 triangles, 684 bytes)
+```
 
-Claude: Exported /Case/Body to body.stl (2,847 triangles, 142KB)
+### Product configurator — variant switching
+
+A device with 3 variant sets: **size** (small, medium, large), **color** (midnight, silver, gold, red), and **finish** (matte, satin, glossy).
+
+```
+You: What configuration options does examples/product_configurator.usda have?
+
+Claude: The product at /Product has 3 variant sets:
+
+  size:   small | medium* | large
+  color:  midnight* | silver | gold | red
+  finish: matte | satin* | glossy
+
+  (* = currently selected)
+
+You: Switch to gold, large, glossy
+
+Claude: Done. Updated /Product:
+  size:   large (1.4× scale)
+  color:  gold — diffuseColor: (0.83, 0.69, 0.22), metallic: 0.9
+  finish: glossy — roughness: 0.1
 ```
 
 ## Requirements
