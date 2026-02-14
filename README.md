@@ -2,6 +2,8 @@
 
 An MCP server that lets AI assistants read, inspect, and manipulate [OpenUSD](https://openusd.org) scenes.
 
+**[Live Demo](https://daslabhq.github.io/openusd-mcp/)** — interactive 3D viewer with variant switching
+
 ```
 pip install openusd-mcp
 ```
