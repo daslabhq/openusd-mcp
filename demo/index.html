@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>openusd-mcp — Interactive Demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-elevated: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #fafafa;
+  --text-muted: #888;
+  --green: #2DFE54;
+  --green-dim: rgba(45, 254, 84, 0.15);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Layout */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.viewport {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.viewport canvas {
+  display: block;
+}
+
+.sidebar {
+  width: 380px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.logo-green { color: var(--green); }
+
+.logo a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.logo a:hover { color: var(--text); }
+
+/* Scene selector */
+.scene-selector {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.scene-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.scene-btn:hover { border-color: #444; color: var(--text); }
+.scene-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+/* Controls */
+.controls {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.control-group {
+  margin-bottom: 12px;
+}
+
+.control-group:last-child { margin-bottom: 0; }
+
+.control-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.control-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.variant-btn {
+  padding: 5px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.variant-btn:hover { border-color: #444; color: var(--text); }
+.variant-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+/* Color swatches */
+.color-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.color-btn:hover { border-color: #555; }
+.color-btn.active {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green-dim);
+}
+
+/* Tool output panel */
+.output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.output-header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.tool-call {
+  margin-bottom: 12px;
+}
+
+.tool-name {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+
+.tool-output {
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--text-muted);
+}
+
+.tool-output .key { color: #9cdcfe; }
+.tool-output .str { color: #ce9178; }
+.tool-output .num { color: #b5cea8; }
+.tool-output .bracket { color: #888; }
+
+/* Footer */
+.footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer a {
+  color: var(--green);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* Viewport overlay */
+.viewport-label {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(10, 10, 10, 0.8);
+  padding: 4px 10px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  .viewport {
+    height: 45vh;
+  }
+  .sidebar {
+    width: 100%;
+    height: 55vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 3D Viewport -->
+  <div class="viewport" id="viewport">
+    <div class="viewport-label" id="viewport-label">Product Configurator — orbit to rotate, scroll to zoom</div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="header">
+      <div class="logo">
+        <span class="logo-green">openusd</span>-mcp
+      </div>
+      <div class="logo">
+        <a href="https://github.com/daslabhq/openusd-mcp">GitHub</a>
+      </div>
+    </div>
+
+    <!-- Scene selector -->
+    <div class="scene-selector">
+      <button class="scene-btn active" data-scene="product" onclick="switchScene('product')">Product Configurator</button>
+      <button class="scene-btn" data-scene="desk" onclick="switchScene('desk')">Desk Setup</button>
+    </div>
+
+    <!-- Variant controls (product only) -->
+    <div class="controls" id="controls-product">
+      <div class="control-group">
+        <div class="control-label">Color</div>
+        <div class="control-options" id="color-options">
+          <button class="color-btn active" data-variant="midnight" style="background:#141419" onclick="setColor('midnight')"></button>
+          <button class="color-btn" data-variant="silver" style="background:#bfbfc4" onclick="setColor('silver')"></button>
+          <button class="color-btn" data-variant="gold" style="background:#d4b038" onclick="setColor('gold')"></button>
+          <button class="color-btn" data-variant="red" style="background:#b81414" onclick="setColor('red')"></button>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Size</div>
+        <div class="control-options" id="size-options">
+          <button class="variant-btn" data-variant="small" onclick="setSize('small')">Small</button>
+          <button class="variant-btn active" data-variant="medium" onclick="setSize('medium')">Medium</button>
+          <button class="variant-btn" data-variant="large" onclick="setSize('large')">Large</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Finish</div>
+        <div class="control-options" id="finish-options">
+          <button class="variant-btn" data-variant="matte" onclick="setFinish('matte')">Matte</button>
+          <button class="variant-btn active" data-variant="satin" onclick="setFinish('satin')">Satin</button>
+          <button class="variant-btn" data-variant="glossy" onclick="setFinish('glossy')">Glossy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desk controls (hidden by default) -->
+    <div class="controls" id="controls-desk" style="display:none">
+      <div class="control-group">
+        <div class="control-label">Scene info</div>
+        <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.6">
+          10 meshes, 5 materials, 1200 x 835 x 1250 mm<br>
+          Orbit to explore the scene.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tool output -->
+    <div class="output" id="output"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <a href="https://github.com/daslabhq/openusd-mcp">pip install openusd-mcp</a>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// -----------------------------------------------------------------------
+// State
+// -----------------------------------------------------------------------
+
+let currentScene = 'product';
+const state = {
+  color: 'midnight',
+  size: 'medium',
+  finish: 'satin',
+};
+
+const COLORS = {
+  midnight: { diffuse: [0.08, 0.08, 0.10], metallic: 0.0 },
+  silver:   { diffuse: [0.75, 0.75, 0.77], metallic: 0.85 },
+  gold:     { diffuse: [0.83, 0.69, 0.22], metallic: 0.90 },
+  red:      { diffuse: [0.72, 0.08, 0.08], metallic: 0.15 },
+};
+
+const SIZES = {
+  small:  0.7,
+  medium: 1.0,
+  large:  1.4,
+};
+
+const FINISHES = {
+  matte:  0.8,
+  satin:  0.4,
+  glossy: 0.1,
+};
+
+// -----------------------------------------------------------------------
+// Renderer setup
+// -----------------------------------------------------------------------
+
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+renderer.setClearColor(0x0a0a0a);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+viewport.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(40, viewport.clientWidth / viewport.clientHeight, 0.1, 1000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 5;
+controls.maxDistance = 100;
+
+// -----------------------------------------------------------------------
+// Lighting
+// -----------------------------------------------------------------------
+
+function createLights() {
+  const group = new THREE.Group();
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+  group.add(ambient);
+
+  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  key.position.set(5, 8, 6);
+  group.add(key);
+
+  const fill = new THREE.DirectionalLight(0x8888ff, 0.3);
+  fill.position.set(-4, 3, -2);
+  group.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xffffff, 0.5);
+  rim.position.set(0, 2, -8);
+  group.add(rim);
+
+  return group;
+}
+
+// -----------------------------------------------------------------------
+// Materials
+// -----------------------------------------------------------------------
+
+function makePBR(color, metalness, roughness) {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color(...color),
+    metalness,
+    roughness,
+  });
+}
+
+// -----------------------------------------------------------------------
+// Product Configurator Scene
+// -----------------------------------------------------------------------
+
+let productGroup, bodyMesh, accentMesh, grilleMesh;
+let bodyMaterial;
+
+function buildProductScene() {
+  const group = new THREE.Group();
+
+  // Body (12 x 8 x 12 cm box)
+  const bodyGeo = new THREE.BoxGeometry(12, 8, 12);
+  bodyMaterial = makePBR(COLORS.midnight.diffuse, COLORS.midnight.metallic, FINISHES.satin);
+  bodyMesh = new THREE.Mesh(bodyGeo, bodyMaterial);
+  bodyMesh.position.set(0, 4, 0);
+  group.add(bodyMesh);
+
+  // Accent strip
+  const accentGeo = new THREE.BoxGeometry(12.2, 0.5, 12.2);
+  const accentMat = makePBR([0.5, 0.5, 0.52], 0.95, 0.15);
+  accentMesh = new THREE.Mesh(accentGeo, accentMat);
+  accentMesh.position.set(0, 7, 0);
+  group.add(accentMesh);
+
+  // Grille
+  const grilleGeo = new THREE.BoxGeometry(10, 5, 0.3);
+  const grilleMat = makePBR([0.12, 0.12, 0.12], 0.3, 0.6);
+  grilleMesh = new THREE.Mesh(grilleGeo, grilleMat);
+  grilleMesh.position.set(0, 4, 6.15);
+  group.add(grilleMesh);
+
+  // Ground plane
+  const groundGeo = new THREE.PlaneGeometry(60, 60);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  group.add(ground);
+
+  return group;
+}
+
+// -----------------------------------------------------------------------
+// Desk Scene
+// -----------------------------------------------------------------------
+
+function buildDeskScene() {
+  const group = new THREE.Group();
+
+  const wood = makePBR([0.55, 0.35, 0.17], 0.0, 0.7);
+  const metal = makePBR([0.7, 0.7, 0.72], 0.9, 0.2);
+  const screen = makePBR([0.05, 0.05, 0.08], 0.0, 0.1);
+  const ceramic = makePBR([0.9, 0.9, 0.85], 0.0, 0.4);
+  const plastic = makePBR([0.15, 0.15, 0.15], 0.0, 0.5);
+
+  // Scale down: USDA is in cm, let's use 1 unit = 1 cm but scale group
+  const s = 0.1; // so 120cm -> 12 units
+
+  // Tabletop
+  const top = new THREE.Mesh(new THREE.BoxGeometry(120*s, 3*s, 60*s), wood);
+  top.position.set(0, 75*s, 0);
+  group.add(top);
+
+  // Legs
+  const legPositions = [[-55, -25], [55, -25], [55, 25], [-55, 25]];
+  for (const [lx, lz] of legPositions) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(4*s, 75*s, 4*s), metal);
+    leg.position.set(lx*s, 37.5*s, lz*s);
+    group.add(leg);
+  }
+
+  // Monitor screen
+  const monScreen = new THREE.Mesh(new THREE.BoxGeometry(60*s, 35*s, 1.5*s), screen);
+  monScreen.position.set(0, (76.5+25)*s, -15*s);
+  group.add(monScreen);
+
+  // Monitor stand
+  const stand = new THREE.Mesh(new THREE.BoxGeometry(8*s, 20*s, 2*s), metal);
+  stand.position.set(0, (76.5+5)*s, -15*s);
+  group.add(stand);
+
+  // Monitor base
+  const base = new THREE.Mesh(new THREE.BoxGeometry(25*s, 1.5*s, 15*s), metal);
+  base.position.set(0, 76.5*s, -15*s);
+  group.add(base);
+
+  // Keyboard
+  const kbd = new THREE.Mesh(new THREE.BoxGeometry(44*s, 1.5*s, 14*s), plastic);
+  kbd.position.set(0, 77*s, 10*s);
+  group.add(kbd);
+
+  // Mug (cylinder approximation)
+  const mugGeo = new THREE.CylinderGeometry(4*s, 4*s, 9*s, 16);
+  const mug = new THREE.Mesh(mugGeo, ceramic);
+  mug.position.set(40*s, (76.5 + 4.5)*s, 10*s);
+  group.add(mug);
+
+  // Ground
+  const groundGeo = new THREE.PlaneGeometry(60, 60);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  group.add(ground);
+
+  return group;
+}
+
+// -----------------------------------------------------------------------
+// Scene management
+// -----------------------------------------------------------------------
+
+let scene = new THREE.Scene();
+let lights = createLights();
+scene.add(lights);
+
+productGroup = buildProductScene();
+const deskGroup = buildDeskScene();
+deskGroup.visible = false;
+
+scene.add(productGroup);
+scene.add(deskGroup);
+
+// Camera positions
+const CAMERAS = {
+  product: { pos: [20, 12, 20], target: [0, 4, 0] },
+  desk:    { pos: [18, 14, 18], target: [0, 6, 0] },
+};
+
+function setCameraForScene(name) {
+  const c = CAMERAS[name];
+  camera.position.set(...c.pos);
+  controls.target.set(...c.target);
+  controls.update();
+}
+
+setCameraForScene('product');
+
+// -----------------------------------------------------------------------
+// Tool output rendering
+// -----------------------------------------------------------------------
+
+function syntaxHighlight(json) {
+  const str = JSON.stringify(json, null, 2);
+  return str.replace(
+    /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      let cls = 'num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'key' : 'str';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
+}
+
+function renderToolOutput(toolName, data) {
+  return `<div class="tool-call">
+    <div class="tool-name">${toolName}</div>
+    <div class="tool-output">${syntaxHighlight(data)}</div>
+  </div>`;
+}
+
+function updateOutput() {
+  const output = document.getElementById('output');
+
+  if (currentScene === 'product') {
+    const col = COLORS[state.color];
+    const variantsData = {
+      variants: [{
+        path: "/Product",
+        variant_sets: [
+          { name: "size", options: ["small", "medium", "large"], selected: state.size },
+          { name: "color", options: ["midnight", "silver", "gold", "red"], selected: state.color },
+          { name: "finish", options: ["matte", "satin", "glossy"], selected: state.finish },
+        ]
+      }]
+    };
+
+    const materialsData = {
+      materials: [{
+        path: `/Product/Materials/${state.color.charAt(0).toUpperCase() + state.color.slice(1)}`,
+        shader: "UsdPreviewSurface",
+        params: {
+          diffuseColor: `(${col.diffuse.join(', ')})`,
+          metallic: String(col.metallic),
+          roughness: String(FINISHES[state.finish]),
+        }
+      }]
+    };
+
+    const statsData = {
+      prim_count: 13,
+      mesh_count: 3,
+      material_count: 4,
+      total_faces: 18,
+      bounds_mm: {
+        x: +(12 * SIZES[state.size] * 10).toFixed(0),
+        y: +(8 * SIZES[state.size] * 10).toFixed(0),
+        z: +(12 * SIZES[state.size] * 10).toFixed(0),
+      }
+    };
+
+    output.innerHTML =
+      `<div class="output-header">MCP Tool Output</div>` +
+      renderToolOutput('usd_list_variants("product_configurator.usda")', variantsData) +
+      renderToolOutput('usd_get_materials("product_configurator.usda")', materialsData) +
+      renderToolOutput('usd_scene_stats("product_configurator.usda")', statsData);
+
+  } else {
+    const statsData = {
+      prim_count: 25,
+      mesh_count: 10,
+      material_count: 5,
+      total_faces: 102,
+      up_axis: "Y",
+      meters_per_unit: 0.01,
+      bounds_mm: { x: 1200, y: 835, z: 1250 }
+    };
+
+    const materialsData = {
+      materials: [
+        { path: "/Desk/Materials/Wood", params: { diffuseColor: "(0.55, 0.35, 0.17)", metallic: "0.0", roughness: "0.7" }},
+        { path: "/Desk/Materials/Metal", params: { diffuseColor: "(0.7, 0.7, 0.72)", metallic: "0.9", roughness: "0.2" }},
+        { path: "/Desk/Materials/Screen", params: { diffuseColor: "(0.05, 0.05, 0.08)", metallic: "0.0", roughness: "0.1" }},
+        { path: "/Desk/Materials/Ceramic", params: { diffuseColor: "(0.9, 0.9, 0.85)", metallic: "0.0", roughness: "0.4" }},
+        { path: "/Desk/Materials/DarkPlastic", params: { diffuseColor: "(0.15, 0.15, 0.15)", metallic: "0.0", roughness: "0.5" }},
+      ]
+    };
+
+    const inspectData = {
+      scene: [{
+        path: "/Desk",
+        type: "Xform",
+        children: [
+          { path: "/Desk/Table/Top", type: "Mesh", faces: 6 },
+          { path: "/Desk/Table/Leg1..4", type: "Mesh", faces: 24 },
+          { path: "/Desk/Monitor/Screen", type: "Mesh", faces: 6 },
+          { path: "/Desk/Monitor/Stand", type: "Mesh", faces: 6 },
+          { path: "/Desk/Monitor/Base", type: "Mesh", faces: 6 },
+          { path: "/Desk/Keyboard", type: "Mesh", faces: 6 },
+          { path: "/Desk/Mug/Body", type: "Mesh", faces: 48 },
+        ]
+      }]
+    };
+
+    output.innerHTML =
+      `<div class="output-header">MCP Tool Output</div>` +
+      renderToolOutput('usd_scene_stats("desk_setup.usda")', statsData) +
+      renderToolOutput('usd_inspect("desk_setup.usda")', inspectData) +
+      renderToolOutput('usd_get_materials("desk_setup.usda")', materialsData);
+  }
+}
+
+// -----------------------------------------------------------------------
+// Variant switching
+// -----------------------------------------------------------------------
+
+function updateActiveButtons(containerId, activeVariant) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  for (const btn of container.children) {
+    btn.classList.toggle('active', btn.dataset.variant === activeVariant);
+  }
+}
+
+window.setColor = function(color) {
+  state.color = color;
+  const c = COLORS[color];
+  bodyMaterial.color.setRGB(...c.diffuse);
+  bodyMaterial.metalness = c.metallic;
+  bodyMaterial.needsUpdate = true;
+  updateActiveButtons('color-options', color);
+  updateOutput();
+};
+
+window.setSize = function(size) {
+  state.size = size;
+  const s = SIZES[size];
+  productGroup.scale.set(s, s, s);
+  updateActiveButtons('size-options', size);
+  updateOutput();
+};
+
+window.setFinish = function(finish) {
+  state.finish = finish;
+  bodyMaterial.roughness = FINISHES[finish];
+  bodyMaterial.needsUpdate = true;
+  updateActiveButtons('finish-options', finish);
+  updateOutput();
+};
+
+window.switchScene = function(name) {
+  currentScene = name;
+  productGroup.visible = (name === 'product');
+  deskGroup.visible = (name === 'desk');
+
+  document.getElementById('controls-product').style.display = name === 'product' ? '' : 'none';
+  document.getElementById('controls-desk').style.display = name === 'desk' ? '' : 'none';
+
+  // Update scene buttons
+  for (const btn of document.querySelectorAll('.scene-btn')) {
+    btn.classList.toggle('active', btn.dataset.scene === name);
+  }
+
+  // Update viewport label
+  document.getElementById('viewport-label').textContent =
+    name === 'product'
+      ? 'Product Configurator — orbit to rotate, scroll to zoom'
+      : 'Desk Setup — orbit to rotate, scroll to zoom';
+
+  setCameraForScene(name);
+  updateOutput();
+};
+
+// -----------------------------------------------------------------------
+// Render loop
+// -----------------------------------------------------------------------
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+updateOutput();
+
+// -----------------------------------------------------------------------
+// Resize handling
+// -----------------------------------------------------------------------
+
+window.addEventListener('resize', () => {
+  const w = viewport.clientWidth;
+  const h = viewport.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+
+</body>
+</html>
